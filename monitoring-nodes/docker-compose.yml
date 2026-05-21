@@ -1,0 +1,72 @@
+services:
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    extra_hosts: 
+      - "host.docker.internal:host-gateway"
+    container_name: prometheus
+
+    restart: unless-stopped
+
+    ports:
+      - "9090:9090"
+
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts:/etc/prometheus/alerts:ro
+      - prometheus_data:/prometheus
+
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=90d'
+
+    depends_on:
+      - blackbox
+      - node-exporter
+
+    networks:
+      - monitoring
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: blackbox
+
+    restart: unless-stopped
+
+    ports:
+      - "9115:9115"
+
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    container_name: node-exporter
+
+    restart: unless-stopped
+
+    ports:
+      - "9100:9100"
+
+    command:
+      - '--path.rootfs=/rootfs'
+
+    volumes:
+      - /:/rootfs:ro
+
+    networks:
+      - monitoring
+
+volumes:
+  prometheus_data:
+
+networks:
+  monitoring:
+    driver: bridge

@@ -1,0 +1,33 @@
+- name: Deploy Monitoring Nodes
+  hosts: monitoring_nodes
+  become: true
+
+  tasks:
+
+    - name: Copy monitoring node files
+      copy:
+        src: ../monitoring-nodes/
+        dest: /opt/monitoring-node/
+        mode: preserve
+
+    - name: Run docker compose
+      shell: |
+        cd /opt/monitoring-node
+        docker compose up -d
+
+- name: Deploy Central Monitoring
+  hosts: central
+  become: true
+
+  tasks:
+
+    - name: Copy central monitoring files
+      copy:
+        src: ../central-monitoring/
+        dest: /opt/central-monitoring/
+        mode: preserve
+
+    - name: Run central stack
+      shell: |
+        cd /opt/central-monitoring
+        docker compose up -d

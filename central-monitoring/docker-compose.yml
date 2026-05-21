@@ -1,0 +1,70 @@
+version: '3.9'
+
+services:
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.102.0
+
+    container_name: victoriametrics
+
+    restart: unless-stopped
+
+    ports:
+      - "8428:8428"
+
+    volumes:
+      - victoria_metrics_data:/storage
+
+    command:
+      - '--storageDataPath=/storage'
+      - '--retentionPeriod=90d'
+
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:10.4.2
+
+    container_name: grafana
+
+    restart: unless-stopped
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+
+    depends_on:
+      - victoriametrics
+
+    networks:
+      - monitoring
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+
+    container_name: alertmanager
+
+    restart: unless-stopped
+
+    ports:
+      - "9093:9093"
+
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+
+    networks:
+      - monitoring
+
+volumes:
+  victoria_metrics_data:
+  grafana_data:
+
+networks:
+  monitoring:
+    driver: bridge

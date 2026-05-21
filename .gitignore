@@ -1,0 +1,17 @@
+**/data/
+
+**/prometheus_data/
+
+**/victoria-metrics-data/
+
+
+
+.env
+
+*.env.local
+
+
+
+*.log
+
+.DS_Store

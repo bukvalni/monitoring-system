@@ -1,0 +1,56 @@
+stages:
+  - lint
+  - validate
+  - deploy
+
+variables:
+  DOCKER_COMPOSE_VERSION: "1.29.2"
+
+
+# LINT STAGE
+
+lint-yaml:
+  stage: lint
+  image: python:3.11
+  before_script:
+    - pip install yamllint
+  script:
+    - yamllint monitoring-nodes/
+    - yamllint central-monitoring/
+    - yamllint ansible/
+  allow_failure: false
+
+
+# VALIDATE STAGE
+
+validate-docker-compose:
+  stage: validate
+  image: docker:24
+  services:
+    - docker:dind
+  before_script:
+    - apk add --no-cache docker-compose
+  script:
+    - docker-compose -f monitoring-nodes/docker-compose.yml config
+    - docker-compose -f central-monitoring/docker-compose.yml config
+
+validate-prometheus:
+  stage: validate
+  image: prom/prometheus:v2.52.0
+  script:
+    - promtool check config monitoring-nodes/prometheus/prometheus.yml
+    - promtool check rules monitoring-nodes/alerts/alert.rules.yml
+
+
+# DEPLOY STAGE
+
+deploy-monitoring:
+  stage: deploy
+  image: alpine:3.20
+  before_script:
+    - apk add --no-cache openssh-client bash
+  script:
+    - echo "Deploying monitoring system via Ansible"
+    - ansible-playbook -i ansible/inventory.yml ansible/deploy.yml
+  only:
+    - main

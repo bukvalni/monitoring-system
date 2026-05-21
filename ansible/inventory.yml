@@ -1,0 +1,20 @@
+all:
+  children:
+
+    monitoring_nodes:
+      hosts:
+        msk-node:
+          ansible_host: 10.10.0.1
+        nsk-node:
+          ansible_host: 10.20.0.1
+        vvo-node:
+          ansible_host: 10.30.0.1
+
+    central:
+      hosts:
+        central-monitoring:
+          ansible_host: 10.0.0.10
+
+  vars:
+    ansible_user: ubuntu
+    ansible_ssh_private_key_file: ~/.ssh/id_rsa
